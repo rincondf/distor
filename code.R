@@ -43,14 +43,18 @@ write.csv(data2023Mins, file = "locs2023.csv")
 
 
 
-
-
-
 plot(min_2023_obs, min_2023_pred)
 abline(0, 1, col = "blue", lwd =  2)
 
 mod_mins <- lm(min_2023_pred ~ min_2023_obs)
 abline(mod_mins, col = "red", lwd = 2)
+
+
+
+
+meta2023Mins <- meta_tmin2023[which(meta_tmin2023$stn_lat < 49 & meta_tmin2023$stn_lat > 46), ]
+meta2023Mins <- meta2023Mins[which(meta2023Mins$stn_lon > -125 & meta2023Mins$stn_lon < -117), ]
+
 
 
 
@@ -106,6 +110,14 @@ abline(mod_max, col = "red", lwd = 2)
 
 
 
+# Checking if cross-validation includes the same stations used to produce predicted values
+
+
+meta2023Max <- meta_tmax3023[which(meta_tmax3023$stn_lat < 49 & meta_tmax3023$stn_lat > 46), ]
+meta2023Max <- meta2023Max[which(meta2023Max$stn_lon > -125 & meta2023Max$stn_lon < -117), ]
+
+
+
 
 
 
@@ -148,17 +160,50 @@ abline(h = 12)
 abline(h = 25)
 
 
+# error in mins
 
-calc_dd_vec(tmax = 30, tmin = 10, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal") - 
-  calc_dd_vec(tmax = 30, tmin = 5, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal")
-
-
-
+min_bel <- abs(calc_dd_vec(tmax = 30, tmin = 10, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal") - 
+                 calc_dd_vec(tmax = 30, tmin = 9.9, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal"))
 
 
-calc_dd_vec(tmax = 35, tmin = 5, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal")
-calc_dd_vec(tmax = 10, tmin = -5, lower_threshold = 6, upper_threshold = 25, cutoff = "horizontal")
+min_abo <- abs(calc_dd_vec(tmax = 30, tmin = 10, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal") - 
+                 calc_dd_vec(tmax = 30, tmin = 10.1, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal"))
 
+min_bel + min_abo
+
+
+# error in maxs
+
+max_bel <- abs(calc_dd_vec(tmax = 30, tmin = 10, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal") - 
+                 calc_dd_vec(tmax = 29.9, tmin = 10, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal"))
+
+max_abo <- abs(calc_dd_vec(tmax = 30.1, tmin = 10, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal") - 
+                 calc_dd_vec(tmax = 30, tmin = 10, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal"))
+
+
+max_bel + max_abo
+
+#####
+
+min_bel + max_bel
+
+min_abo + max_abo
+
+####
+
+devs <- c(5, 2, 1, 3, 4, 0.5, 0.1)
+
+mins_err <- c(4.00, 1.73, 0.90, 2.52, 3.27, 0.46, 0.09)
+
+
+mod_dev <- lm(mins_err ~ devs)
+summary(mod_dev)
+
+plot(devs, mins_err)
+abline(mod_dev)
+
+
+###########
 
 
 single_sin <- function(x, tu, tl) {
@@ -194,8 +239,8 @@ integrate(single_sin, lower = 0, upper = 1, tu = 25, tl = 6)
 
 
 single_sinA <- function(x) {
-  tmax = 22
-  tmin = -2
+  tmax = 35
+  tmin = 10
   
   
   
@@ -209,8 +254,8 @@ single_sinA <- function(x) {
 }
 
 
-plot(seq(0, 1, 0.01), single_sinA(seq(0, 1, 0.01)), type = "l", ylim = c(-5, 25.5), lwd = 2)
-abline(h = 25, lty = 2)
-abline(h = 5, lty = 2)
+plot(seq(0, 1, 0.01), single_sinA(seq(0, 1, 0.01)), type = "l", ylim = c(0, 35.5), lwd = 2)
+abline(h = 10, lty = 2)
+abline(h = 29, lty = 2)
 
 lines(seq(0, 1, 0.01), single_sinA(seq(0, 1, 0.01)), type = "l", col = "red", lwd = 2)
