@@ -47,6 +47,7 @@ plot(min_2023_obs, min_2023_pred)
 abline(0, 1, col = "blue", lwd =  2)
 
 mod_mins <- lm(min_2023_pred ~ min_2023_obs)
+summary(mod_mins)
 abline(mod_mins, col = "red", lwd = 2)
 
 
@@ -106,6 +107,7 @@ plot(max_2023_obs, max_2023_pred)
 abline(0, 1, col = "blue", lwd =  2)
 
 mod_max <- lm(max_2023_pred ~ max_2023_obs)
+summary(mod_max)
 abline(mod_max, col = "red", lwd = 2)
 
 
@@ -259,3 +261,212 @@ abline(h = 10, lty = 2)
 abline(h = 29, lty = 2)
 
 lines(seq(0, 1, 0.01), single_sinA(seq(0, 1, 0.01)), type = "l", col = "red", lwd = 2)
+
+
+
+
+
+
+#############################
+
+
+colnames(awn_2023_summary) <- c("station_id", "date", "temp_max", "temp_min")
+
+awn_2023_summary$date <- as.Date(awn_2023_summary$date, format = "%Y/%m/%d")
+awn_2023_summary$julian <- as.numeric(format(awn_2023_summary$date, "%j"))
+
+
+awn_2023_summary$long <- rep(NA, 121210)
+awn_2023_summary$lat <- rep(NA, 121210)
+
+
+
+for(i in 1: length(awn_stations$station_id)) {
+  awn_2023_summary$long[which(awn_2023_summary$station_id == awn_stations$station_id[i])] <-
+    awn_stations$lng[which(awn_stations$station_id == awn_stations$station_id[i])]
+}
+
+
+for(i in 1: length(awn_stations$station_id)) {
+  awn_2023_summary$lat[which(awn_2023_summary$station_id == awn_stations$station_id[i])] <-
+    awn_stations$lat[which(awn_stations$station_id == awn_stations$station_id[i])]
+}
+
+
+
+library(daymetr)
+
+temp_recs <- list()
+
+for(i in 1: length(awn_stations$station_id)) {
+  temp_recs[[i]] <- download_daymet(
+    site = "Daymet",
+    lat = awn_stations$lat[i],
+    lon = awn_stations$lng[i],
+    start = 2023,
+    end = 2023,
+    path = tempdir(),
+    internal = TRUE,
+    silent = FALSE,
+    force = FALSE,
+    simplify = FALSE
+  )
+}
+
+
+tmax <- list()
+
+for(i in 1: length(awn_stations$station_id)) {
+  tmax[[i]] <- as.numeric(temp_recs[[i]]$data[,7])
+}
+
+tmin <- list()
+
+for(i in 1: length(awn_stations$station_id)) {
+  tmin[[i]] <- as.numeric(temp_recs[[i]]$data[,8])
+}
+
+
+
+
+awn_2023_summary <- awn_2023_summary[-which(awn_2023_summary$date > "2023-12-31"), ]
+
+a <- tapply(awn_2023_summary$temp_max, awn_2023_summary$station_id, length)
+a <- a[which(a == 365)]
+a <- as.numeric(names(a))
+
+
+awn_2023_summary <- awn_2023_summary[which(awn_2023_summary$station_id %in% a), ]
+
+tapply(awn_2023_summary$temp_max, awn_2023_summary$station_id, length)
+
+awn_2023_summary$t_maxDM <- rep(NA, 119355)
+awn_2023_summary$t_minDM <- rep(NA, 119355)
+
+
+
+
+for(i in 1: length(awn_stations$station_id)) {
+  awn_2023_summary$t_maxDM[which(awn_2023_summary$station_id == awn_stations$station_id[i])] <- tmax[[i]]
+}
+
+for(i in 1: length(awn_stations$station_id)) {
+  awn_2023_summary$t_minDM[which(awn_2023_summary$station_id == awn_stations$station_id[i])] <- tmin[[i]]
+}
+
+
+awn_2023_summary$temp_max <- (awn_2023_summary$temp_max - 32) * (5/9)
+awn_2023_summary$temp_min <- (awn_2023_summary$temp_min - 32) * (5/9)
+
+awn_2023_summary <- awn_2023_summary[-which(awn_2023_summary$temp_max > 50), ]
+awn_2023_summary <- awn_2023_summary[-which(awn_2023_summary$temp_min == -17.77777777777777777777777), ]
+
+plot(awn_2023_summary$temp_max, awn_2023_summary$t_maxDM)
+abline(0, 1, col = "blue", lwd =  2)
+
+mod_max_awn <- lm(awn_2023_summary$t_maxDM ~ awn_2023_summary$temp_max)
+summary(mod_max_awn)
+abline(mod_max_awn, col = "red", lwd = 2)
+
+
+###
+
+plot(awn_2023_summary$temp_min, awn_2023_summary$t_minDM)
+abline(0, 1, col = "blue", lwd =  2)
+
+mod_min_awn <- lm(awn_2023_summary$t_minDM ~ awn_2023_summary$temp_min)
+summary(mod_min_awn)
+abline(mod_min_awn, col = "red", lwd = 2)
+
+
+##########
+
+
+awn_2023_summary$se_max <- (awn_2023_summary$temp_max - awn_2023_summary$t_maxDM)^2
+awn_2023_summary$se_min <- (awn_2023_summary$temp_min - awn_2023_summary$t_minDM)^2
+
+
+
+
+
+max_mse_awn <- data.frame(mse = as.numeric(tapply(awn_2023_summary$se_max, awn_2023_summary$station_id, mean, na.rm = TRUE)),
+                          station_id = as.numeric(dimnames(tapply(awn_2023_summary$se_max, awn_2023_summary$station_id, mean, na.rm = TRUE))[[1]]))
+
+
+
+
+max_mse_awn$long <- rep(NA, 327)
+max_mse_awn$lat <- rep(NA, 327)
+
+
+
+for(i in 1: length(awn_stations$station_id)) {
+  max_mse_awn$long[which(max_mse_awn$station_id == awn_stations$station_id[i])] <-
+    awn_stations$lng[which(awn_stations$station_id == awn_stations$station_id[i])]
+}
+
+
+for(i in 1: length(awn_stations$station_id)) {
+  max_mse_awn$lat[which(max_mse_awn$station_id == awn_stations$station_id[i])] <-
+    awn_stations$lat[which(awn_stations$station_id == awn_stations$station_id[i])]
+}
+
+
+
+
+
+max_mse_awn <- data.frame(mse = as.numeric(tapply(awn_2023_summary$se_max, awn_2023_summary$station_id, mean, na.rm = TRUE)),
+                          station_id = as.numeric(dimnames(tapply(awn_2023_summary$se_max, awn_2023_summary$station_id, mean, na.rm = TRUE))[[1]]))
+
+
+
+
+max_mse_awn$long <- rep(NA, 327)
+max_mse_awn$lat <- rep(NA, 327)
+
+
+
+for(i in 1: length(awn_stations$station_id)) {
+  max_mse_awn$long[which(max_mse_awn$station_id == awn_stations$station_id[i])] <-
+    awn_stations$lng[which(awn_stations$station_id == awn_stations$station_id[i])]
+}
+
+
+for(i in 1: length(awn_stations$station_id)) {
+  max_mse_awn$lat[which(max_mse_awn$station_id == awn_stations$station_id[i])] <-
+    awn_stations$lat[which(awn_stations$station_id == awn_stations$station_id[i])]
+}
+
+
+
+#############
+
+
+
+
+
+
+min_mse_awn <- data.frame(mse = as.numeric(tapply(awn_2023_summary$se_min, awn_2023_summary$station_id, mean, na.rm = TRUE)),
+                          station_id = as.numeric(dimnames(tapply(awn_2023_summary$se_min, awn_2023_summary$station_id, mean, na.rm = TRUE))[[1]]))
+
+
+
+min_mse_awn$long <- rep(NA, 327)
+min_mse_awn$lat <- rep(NA, 327)
+
+
+
+for(i in 1: length(awn_stations$station_id)) {
+  min_mse_awn$long[which(min_mse_awn$station_id == awn_stations$station_id[i])] <-
+    awn_stations$lng[which(awn_stations$station_id == awn_stations$station_id[i])]
+}
+
+
+for(i in 1: length(awn_stations$station_id)) {
+  min_mse_awn$lat[which(min_mse_awn$station_id == awn_stations$station_id[i])] <-
+    awn_stations$lat[which(awn_stations$station_id == awn_stations$station_id[i])]
+}
+
+
+write.csv(max_mse_awn, file = "max_mse_awn.csv")
+write.csv(min_mse_awn, file = "min_mse_awn.csv")
