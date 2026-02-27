@@ -164,8 +164,8 @@ abline(h = 25)
 
 # error in mins
 
-min_bel <- abs(calc_dd_vec(tmax = 30, tmin = 10, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal") - 
-                 calc_dd_vec(tmax = 30, tmin = 9.9, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal"))
+min_bel <- abs(calc_dd_vec(tmax = 20, tmin = -1, lower_threshold = 5, upper_threshold = 25, cutoff = "horizontal") - 
+                 calc_dd_vec(tmax = 20, tmin = -6, lower_threshold = 5, upper_threshold = 25, cutoff = "horizontal"))
 
 
 min_abo <- abs(calc_dd_vec(tmax = 30, tmin = 10, lower_threshold = 10, upper_threshold = 29, cutoff = "horizontal") - 
@@ -241,8 +241,8 @@ integrate(single_sin, lower = 0, upper = 1, tu = 25, tl = 6)
 
 
 single_sinA <- function(x) {
-  tmax = 35
-  tmin = 10
+  tmax = 20
+  tmin = -6
   
   
   
@@ -256,9 +256,9 @@ single_sinA <- function(x) {
 }
 
 
-plot(seq(0, 1, 0.01), single_sinA(seq(0, 1, 0.01)), type = "l", ylim = c(0, 35.5), lwd = 2)
-abline(h = 10, lty = 2)
-abline(h = 29, lty = 2)
+plot(seq(0, 1, 0.01), single_sinA(seq(0, 1, 0.01)), type = "l", ylim = c(-5, 25.5), lwd = 2, xlab = "", ylab = "", cex.axis = 2)
+abline(h = 5, lty = 2)
+abline(h = 25, lty = 2)
 
 lines(seq(0, 1, 0.01), single_sinA(seq(0, 1, 0.01)), type = "l", col = "red", lwd = 2)
 
